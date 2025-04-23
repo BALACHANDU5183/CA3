@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"+/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>www.fastnews.com</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f4f4;
+            color: #111;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5em;
+            display: flex;
+            flex-direction: column; /* added */
+            align-items: center;     /* centers content */
+            flex-wrap: wrap;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            gap: 1em;
+        }
+
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #111;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #f39c12;
+        }
+
+        main {
+            padding: 2em;
+        }
+
+        .inb {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2em;
+            justify-content: center;
+        }
+
+        .innerbox {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .innerbox:hover {
+            transform: scale(1.05);
+        }
+
+        .innerbox img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .content {
+            padding: 1em;
+        }
+
+        .content h3 {
+            margin-top: 0;
+            color: #f39c12;
+        }
+
+        .content p {
+            margin-bottom: 0;
+            font-size: 0.95em;
+        }
+
+        footer {
+            background: rgba(255, 255, 255, 0.9);
+            color: #111;
+            text-align: center;
+            padding: 2em;
+            margin-top: 3em;
+        }
+
+        .social-icons a {
+            margin: 0 10px;
+            color: #111;
+            text-decoration: none;
+        }
+
+        .social-icons a:hover {
+            color: #f39c12;
+        }
+
+        #site-title {
+            flex: 1 1 100%;
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #f39c12;
+        }
+
+        #scrollTopBtn {
+            position: fixed;
+            bottom: 130px;
+            right: 30px;
+            padding: 10px 16px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 999;
+            display: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+
+        #scrollTopBtn:hover {
+            background-color: #e67e22;
+        }
+
+        #chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chat-header {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #chat-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f4f4f4;
+        }
+
+        #chat-input-container {
+            display: flex;
+            border-top: 1px solid #ccc;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        #chat-input {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #111;
+        }
+
+        #chat-input::placeholder {
+            color: #aaa;
+        }
+
+        #chat-input-container button {
+            background-color: #f39c12;
+            border: none;
+            padding: 10px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #chat-input-container button:hover {
+            background-color: #e67e22;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background-color: #f39c12;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .bot {
+            background-color: #ddd;
+            color: black;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        #chatbot-container.collapsed {
+            height: auto;
+        }
+
+        #chatbot-container.collapsed #chat-messages,
+        #chatbot-container.collapsed #chat-input-container {
+            display: none;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <header>
+        <div id="site-title" style="flex: 1 1 100%; text-align: center;">
+            <span style="font-size: 0.5em; font-weight: bold; color: var(--accent-color);">Fast News</span>
+            <span id="current-date" style="display: block; font-size: 0.5em; color: var(--text-color); margin-top: 0.3em;"></span>
+        </div>        
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="Register.html">Register</a>
+            <a href="Login.html">Login</a>
+            <a href="About.html">About Us</a>
+        </nav>
+    </header>
+
+    <main>
+        <section style="text-align: center; margin-bottom: 2em;">
+            <input type="text" id="searchBox" placeholder="Search categories..." onkeyup="filterArticles()" 
+                style="padding: 0.8em; width: 80%; max-width: 400px; border-radius: 25px; border: 1px solid #ccc;">
+        </section>
+
+        <div class="inb">
+            <div class="innerbox" data-category="sports">
+                <a href="https://www.thehindu.com/sport/" target="_blank"><img src ="Sports.png"></a>
+                <div class="content">
+                    <h3>Sports</h3>
+                    <p>Stay updated with the latest scores, thrilling match highlights, and player insights.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="food">
+                <a href="https://www.thehindu.com/food/" target="_blank"><img src ="Food.png"></a>
+                <div class="content">
+                    <h3>Food</h3>
+                    <p>Discover delicious recipes, food trends, and health tips from culinary experts.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="politics">
+                <a href="https://www.thehindu.com/tag/1349/" target="_blank"><img src ="Political.webp"></a>
+                <div class="content">
+                    <h3>Politics</h3>
+                    <p>Catch up on current affairs, debates, and in-depth analysis of political landscapes.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="technology">
+                <a href="https://www.thehindu.com/sci-tech/technology/" target="_blank"><img src ="Technology.png"></a>
+                <div class="content">
+                    <h3>Technology</h3>
+                    <p>Explore tech innovations, gadgets, AI breakthroughs, and software reviews.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="health">
+                <a href="https://www.thehindu.com/sci-tech/health/" target="_blank"><img src ="Health.png"></a>
+                <div class="content">
+                    <h3>Health</h3>
+                    <p>Read expert advice on fitness, wellness, mental health, and medical advancements.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="education">
+                <a href="https://www.thehindu.com/education/" target="_blank"><img src ="Education.png"></a>
+                <div class="content">
+                    <h3>Education</h3>
+                    <p>Stay ahead with news on courses, careers, results, and scholarship opportunities.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="business">
+                <a href="https://www.thehindu.com/business/" target="_blank"><img src ="Business.png"></a>
+                <div class="content">
+                    <h3>Business</h3>
+                    <p>Stay updated with the latest developments in finance, markets, and the corporate world.</p>
+                </div>
+            </div>
+
+            <div class="innerbox" data-category="global">
+                <a href="https://www.thehindu.com/news/international/" target="_blank"><img src ="Global.png"></a>
+                <div class="content">
+                    <h3>Global</h3>
+                    <p>Get the top international headlines and stories shaping the world today.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="background-color: rgb(169, 162, 152);">
+        <h3>Contact Us</h3>
+        <p>Phone: +91 12345678</p>
+        <p>Email: htmlca@gmail.com</p>
+        <p>Address: LPU, Jalandhar, India</p>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/" target="_blank">Facebook</a>
+            <a href="https://www.twitter.com/" target="_blank">Twitter</a>
+            <a href="https://www.linkedin.com/" target="_blank">LinkedIn</a>
+        </div>
+    </footer>
+
+    <div id="chatbot-container" class="collapsed">
+        <div id="chat-header">🤖 Chat with us!</div>
+        <div id="chat-messages"></div>
+        <div id="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>    
+
+    <button onclick="scrollToTop()" id="scrollTopBtn" title="Go to top">⬆️</button>
+
+    <script>
+        function filterArticles() {
+            const input = document.getElementById("searchBox").value.toLowerCase();
+            const cards = document.querySelectorAll(".innerbox");
+
+            cards.forEach(card => {
+                const category = card.getAttribute("data-category");
+                if (category.includes(input)) {
+                    card.style.display = "block";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+        }
+
+        // Scroll button
+        const moveToTopBtn = document.getElementById("scrollTopBtn");
+        window.onscroll = () => {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                moveToTopBtn.style.display = "block";
+            } else {
+                moveToTopBtn.style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateDate() {
+            const dateEl = document.getElementById("current-date");
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateEl.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        updateDate();
+        setInterval(updateDate, 60000);
+
+        const chatbotContainer = document.getElementById("chatbot-container");
+        const chatHeader = document.getElementById("chat-header");
+        const chatMessages = document.getElementById("chat-messages");
+        const chatInput = document.getElementById("chat-input");
+
+        // Toggle chatbot open/close
+        chatHeader.addEventListener("click", () => {
+            chatbotContainer.classList.toggle("collapsed");
+            if (chatbotContainer.classList.contains("collapsed")) {
+                chatMessages.style.display = "none";
+                document.getElementById("chat-input-container").style.display = "none";
+            } else {
+                chatMessages.style.display = "block";
+                document.getElementById("chat-input-container").style.display = "flex";
+            }
+        });
+
+        // ========== Send Message ==========
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+        
+            appendMessage("user", message);
+            chatInput.value = "";
+        
+            try {
+                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyBDxVGnCrTOll1L7Vul_SqQRoS5I6KNAk8", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            role: "user",
+                            parts: [{ text: message }]
+                        }]
+                    })
+                });
+            
+                const data = await response.json();
+                const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I didn't get that.";
+                appendMessage("bot", botText);
+            } catch (err) {
+                console.error("Chatbot Error:", err);
+                appendMessage("bot", "Oops! Something went wrong.");
+            }
+        }
+
+        // ========== Append Message ==========
+        function appendMessage(sender, text) {
+            const msgDiv = document.createElement("div");
+            msgDiv.classList.add("message", sender);
+            msgDiv.innerText = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ========== Handle Enter Key ==========
+        chatInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();  // Prevent newline
+                sendMessage();
+            }
+        });
+
+        // Send button
+        document.querySelector("#chat-input-container button").addEventListener("click", sendMessage);
+
+        //JQuery Feature
+        $(document).ready(function () {
+            $(".innerbox").hide().each(function (i) {
+                $(this).delay(200 * i).fadeIn(600);
+            });
+        });
+    </script>
+
+</body>
+</html>
